@@ -6,6 +6,9 @@ import com.example.plugins.*
 
 fun main() {
     embeddedServer(Netty, port = 8081, host = "0.0.0.0") {
+
+        val server = DrawingServer()
+        configureSessions()
         configureRouting()
         configureSerialization()
         configureSockets()
