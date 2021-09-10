@@ -1,9 +1,11 @@
 package com.example.data
 
 import com.example.data.models.Announcement
+import com.example.data.models.ChosenWord
+import com.example.data.models.PhaseChange
 import com.google.gson.Gson
 import io.ktor.http.cio.websocket.*
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.*
 
 class Room(
     val name: String,
@@ -12,6 +14,11 @@ class Room(
 ) {
 
     val gson = Gson()
+
+    private var timerJob: Job? = null
+    private var drawingPlayer: Player? = null
+    private var winningPlayers = listOf<String>()
+    private var word: String? = null
 
     private var phaseChangedListener: ((Phase) -> Unit)? = null
     var phase = Phase.WAITING_FOR_PLAYERS
@@ -66,6 +73,38 @@ class Room(
         return player
     }
 
+    private fun timeAndNotify(ms: Long) {
+        timerJob?.cancel()
+        timerJob = GlobalScope.launch {
+            val phaseChange = PhaseChange(
+                phase,
+                ms,
+                drawingPlayer?.userName
+            )
+
+            // this means 10000/1000 = 10s, you can easily understand what means this.
+            repeat((ms / UPDATE_TIME_FREQUENCY).toInt()) {
+
+                // new game state always starts 0, so if it is not you have to set value = 0 at this point
+                if(it != 0) {
+                    phaseChange.phase = null
+                }
+
+                // you can tell phase change to player
+                broadcast(gson.toJson(phaseChange))
+                phaseChange.time -= UPDATE_TIME_FREQUENCY
+                delay(UPDATE_TIME_FREQUENCY)
+            }
+            phase = when(phase) {
+                Phase.WAITING_FOR_START -> Phase.NEW_ROUND
+                Phase.GAME_RUNNING -> Phase.SHOW_WORD
+                Phase.SHOW_WORD -> Phase.NEW_ROUND
+                Phase.NEW_ROUND -> Phase.GAME_RUNNING
+                else -> Phase.WAITING_FOR_PLAYERS
+            }
+        }
+    }
+
 
     // When game start
     suspend fun broadcast(message: String){
@@ -88,12 +127,30 @@ class Room(
         return players.find { it.userName == username } != null
     }
 
-    private fun waitingForPlayers() {
+    fun setWordAndSwitchToGameRunning(word: String){
+        this.word = word
+        phase = Phase.GAME_RUNNING
+    }
 
+    private fun waitingForPlayers() {
+        GlobalScope.launch {
+            val phaseChange = PhaseChange(
+                Phase.WAITING_FOR_PLAYERS,
+                DELAY_WAITING_FOR_START_TO_NEW_ROUND
+            )
+            broadcast(gson.toJson(phaseChange))
+        }
     }
 
     private fun waitingForStart() {
-
+        GlobalScope.launch {
+            timeAndNotify(DELAY_WAITING_FOR_START_TO_NEW_ROUND)
+            val phaseChange = PhaseChange(
+                Phase.WAITING_FOR_START,
+                DELAY_WAITING_FOR_START_TO_NEW_ROUND
+            )
+            broadcast(gson.toJson(phaseChange))
+        }
     }
 
     private fun newRound() {
@@ -105,7 +162,20 @@ class Room(
     }
 
     private fun showWord() {
-
+        GlobalScope.launch {
+            if (winningPlayers.isEmpty()){
+                drawingPlayer?.let {
+                    it.score -= PENALTY_NOBODY_GUESSED_IT
+                }
+            }
+            word?.let {
+                val chosenWord = ChosenWord(it,name)
+                broadcast(gson.toJson(chosenWord))
+            }
+            timeAndNotify(DELAY_SHOW_WORD_TO_NEW_ROUND)
+            val phaseChange = PhaseChange(Phase.SHOW_WORD, DELAY_SHOW_WORD_TO_NEW_ROUND)
+            broadcast(gson.toJson(phaseChange))
+        }
     }
 
     enum class Phase {
@@ -114,5 +184,17 @@ class Room(
         NEW_ROUND,
         GAME_RUNNING,
         SHOW_WORD
+    }
+
+    companion object {
+
+        const val UPDATE_TIME_FREQUENCY = 1000L
+
+        const val DELAY_WAITING_FOR_START_TO_NEW_ROUND = 10000L
+        const val DELAY_NEW_ROUND_TO_GAME_RUNNING = 20000L
+        const val DELAY_GAME_RUNNING_TO_SHOW_WORD = 60000L
+        const val DELAY_SHOW_WORD_TO_NEW_ROUND = 10000L
+
+        const val PENALTY_NOBODY_GUESSED_IT = 50
     }
 }

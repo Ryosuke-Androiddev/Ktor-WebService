@@ -1,6 +1,6 @@
 package com.example.data.models
 
-import com.example.Utility.Constants.TYPE_ANNOUNCEMENT
+import com.example.utility.Constants.TYPE_ANNOUNCEMENT
 
 data class Announcement(
     val message: String,

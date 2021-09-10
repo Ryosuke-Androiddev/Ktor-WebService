@@ -1,6 +1,6 @@
 package com.example.data.models
 
-import com.example.Utility.Constants.TYPE_CHAT_MESSAGE
+import com.example.utility.Constants.TYPE_CHAT_MESSAGE
 
 data class ChatMessage(
     val from: String,
