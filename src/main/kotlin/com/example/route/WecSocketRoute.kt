@@ -8,6 +8,7 @@ import com.example.data.Room
 import com.example.data.models.*
 import com.example.session.DrawingSession
 import com.example.utility.Constants.TYPE_CHOSEN_WORD
+import com.example.utility.Constants.TYPE_GAME_STATE
 import com.example.utility.Constants.TYPE_PHASE_CHANGE
 import com.google.gson.Gson
 import com.google.gson.JsonParser
@@ -89,6 +90,7 @@ fun Route.standardWebSocket(
                         TYPE_JOIN_ROOM_HANDSHAKE -> JoinedRoomHandshake::class.java
                         TYPE_PHASE_CHANGE -> PhaseChange::class.java
                         TYPE_CHOSEN_WORD -> ChosenWord::class.java
+                        TYPE_GAME_STATE -> GameState::class.java
                         else -> BaseModel::class.java
                     }
                     val payload = gson.fromJson(message,type)
