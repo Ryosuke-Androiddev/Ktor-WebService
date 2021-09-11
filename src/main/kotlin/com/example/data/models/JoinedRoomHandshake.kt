@@ -1,6 +1,6 @@
 package com.example.data.models
 
-import com.example.Utility.Constants.TYPE_JOIN_ROOM_HANDSHAKE
+import com.example.utility.Constants.TYPE_JOIN_ROOM_HANDSHAKE
 
 data class JoinedRoomHandshake(
     val username: String,

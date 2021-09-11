@@ -1,6 +1,6 @@
 package com.example.data.models
 
-import com.example.Utility.Constants.TYPE_DRAW_DATA
+import com.example.utility.Constants.TYPE_DRAW_DATA
 
 data class DrawData(
     val roomName: String,

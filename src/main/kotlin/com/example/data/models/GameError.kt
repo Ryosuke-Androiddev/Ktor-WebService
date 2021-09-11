@@ -1,6 +1,6 @@
 package com.example.data.models
 
-import com.example.Utility.Constants.TYPE_GAME_ERROR
+import com.example.utility.Constants.TYPE_GAME_ERROR
 
 data class GameError(
     val errorType: Int

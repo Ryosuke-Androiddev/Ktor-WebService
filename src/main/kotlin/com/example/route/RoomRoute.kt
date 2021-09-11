@@ -1,5 +1,5 @@
 import com.example.DrawingServer
-import com.example.Utility.Constants
+import com.example.utility.Constants
 import com.example.data.Room
 import com.example.data.models.BasicApiResponse
 import com.example.data.models.CreateRoomRequest
@@ -9,7 +9,6 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import javax.xml.transform.OutputKeys
 
 fun Route.createRoomRoute(){
 
